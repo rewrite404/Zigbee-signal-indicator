@@ -14,11 +14,10 @@ import Adafruit_GPIO.SPI as SPI
 import serial as serial
 import threading
 import queue
-import random
 
 
-WIDTH = 130
-HEIGHT = 161
+WIDTH = 128
+HEIGHT = 160
 SPEED_HZ = 4000000
 # Raspberry Pi configuration.
 DC = 24
@@ -35,10 +34,24 @@ disp = TFT.ST7735(
         max_speed_hz=SPEED_HZ))
 
 disp.begin()
-disp.clear((255, 0, 0))
+disp.clear()
+# Load an image.
+print('Loading image...')
+image = Image.open('1234.jpg')
+
+# Resize the image and rotate it so matches the display.
+image = image.rotate(270).resize((WIDTH, HEIGHT))
+
+# Draw the image on the display hardware.
+print('Drawing image')
+disp.display(image)
+sleep(5)
+
+
 draw = disp.draw()
 #font = ImageFont.load_default()
 font = ImageFont.truetype('Minecraft.ttf', 24)
+
 
 def draw_rotated_text(image, text, position, angle, font, fill=(255,255,255)):
     # Get rendered font width and height.
@@ -99,14 +112,14 @@ class SerialProcess():
         return data
 
 
-jmp = Button(3)
+jmp = Button(21)
 testbtn = Button(2)
 
 btn37 = Button(26)
 stopbtn = Button(19)
 channelbtn = Button(13)
 startbtn = Button(6)
-startchannel = 11
+channel = 11
 
 
 def rxtxmode():
@@ -129,15 +142,16 @@ def stoptest():
 def change_channel():
     print('try to change channel')
     sp.write('e')
-    #sp.write('getchannel')
-    #print(output_queue.get())
-    #print(output_queue.get().split('{')[3][7:10])
-    a = random.randint(11,25)
-    sp.write('setchannel '+format(a, 'X'))
+    global channel
+    if channel == 25:
+        channel = 11
+    else:
+        channel = channel+1
+    sp.write('setchannel '+format(channel, 'X'))
     disp.clear()
-    draw_rotated_text(disp.buffer, 'channel: ' + str(a), (80, 20), 270, font, fill=(255, 255, 255))
+    draw_rotated_text(disp.buffer, 'channel: ' + str(channel), (80, 20), 270, font, fill=(255, 255, 255))
     disp.display()
-    print('changed to channel ' + str(a))
+    print('changed to channel ' + str(channel))
 
 
 '''
@@ -145,7 +159,12 @@ def signaling():
     for i in range(10):
         if output_queue.get().split('{')[7][0:4] == '0xFF':
 '''
-
+'''
+def checkdata():
+    if output_queue.qsize()<10:
+        return 0
+    else:
+'''
 
 
 def starttest():
@@ -154,13 +173,14 @@ def starttest():
         sp.write('tx 0')
         disp.clear()
         draw_rotated_text(disp.buffer, 'TX mode', (30,20), 270, font, fill=(255, 255, 255))
-        draw_rotated_text(disp.buffer, 'Channel: ' + '25', (80, 20), 270, font, fill=(255, 255, 255))
+        draw_rotated_text(disp.buffer, 'Channel: ' + str(channel), (80, 20), 270, font, fill=(255, 255, 255))
         disp.display()
 
     else:
         print('enter rx mode recving')
         sp.write('rx')
         #while not output_queue.empty():
+        #checkdata()
         if not output_queue.empty():
             if output_queue.get().split('{')[7][0:4] == '0xFF':
                 print('good')
