@@ -1,5 +1,5 @@
 import multiprocessing
-
+from gpiozero import Buzzer
 from gpiozero import Button
 from signal import pause
 from time import sleep, time
@@ -14,6 +14,17 @@ import Adafruit_GPIO.SPI as SPI
 import serial as serial
 import threading
 import queue
+
+jmp = Button(21)
+testbtn = Button(2)
+
+btn37 = Button(26)
+stopbtn = Button(19)
+channelbtn = Button(13)
+startbtn = Button(6, hold_time=5)
+channel = 11
+bz = Buzzer(12)
+bz.on()
 
 
 WIDTH = 128
@@ -112,14 +123,7 @@ class SerialProcess():
         return data
 
 
-jmp = Button(21)
-testbtn = Button(2)
 
-btn37 = Button(26)
-stopbtn = Button(19)
-channelbtn = Button(13)
-startbtn = Button(6)
-channel = 11
 
 
 def rxtxmode():
@@ -165,6 +169,8 @@ def checkdata():
         return 0
     else:
 '''
+
+
 
 
 def starttest():
@@ -222,6 +228,10 @@ def starttest():
         '''
         output_queue.queue.clear()
 
+def longmode():
+    print('here')
+    pause()
+    print('after pause')
 
 input_queue = queue.Queue()
 output_queue = queue.Queue()
@@ -254,9 +264,10 @@ if __name__ == '__main__':
         try:
             t = threading.Thread(target=io_jobs)
             t.start()
-            startbtn.when_pressed = starttest
+            startbtn.when_released = starttest
             channelbtn.when_pressed = change_channel
             stopbtn.when_pressed = stoptest
+            startbtn.when_held = longmode
             pause()
 
         except Exception as e:
