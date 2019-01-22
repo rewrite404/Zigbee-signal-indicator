@@ -16,15 +16,13 @@ import threading
 import queue
 
 jmp = Button(21)
-testbtn = Button(2)
-
 btn37 = Button(26)
 stopbtn = Button(19)
 channelbtn = Button(13)
 startbtn = Button(6, hold_time=5)
 channel = 11
-bz = Buzzer(12)
-bz.on()
+#bz = Buzzer(12)
+#bz.beep(on_time=3)
 
 
 WIDTH = 128
@@ -56,12 +54,13 @@ image = image.rotate(270).resize((WIDTH, HEIGHT))
 # Draw the image on the display hardware.
 print('Drawing image')
 disp.display(image)
-sleep(5)
+sleep(3)
 
 
 draw = disp.draw()
 #font = ImageFont.load_default()
-font = ImageFont.truetype('Minecraft.ttf', 24)
+font1 = ImageFont.truetype('HelveticaBlkIt.ttf', 24)
+font2 = ImageFont.truetype('HelveticaBlkIt.ttf', 12)
 
 
 def draw_rotated_text(image, text, position, angle, font, fill=(255,255,255)):
@@ -138,8 +137,15 @@ def stoptest():
     sp.write('e')
     print('stop sended')
     disp.clear()
-    draw_rotated_text(disp.buffer, 'stop ', (30, 80), 270, font, fill=(255, 255, 255))
-    #draw_rotated_text(disp.buffer, 'channel: ' + 'temp', (80, 20), 90, font, fill=(255, 255, 255))
+    draw_rotated_text(disp.buffer, 'STOPED ', (90, 40), 270, font1, fill=(255, 255, 255))
+    draw_rotated_text(disp.buffer, 'Channel', (55, 20), 270, font2, fill=(0, 255, 0))
+    draw_rotated_text(disp.buffer, str(channel), (50, 80), 270, font1, fill=(255, 255, 255))
+    draw_rotated_text(disp.buffer, 'LQI', (30, 20), 270, font2, fill=(0, 255, 0))
+    draw_rotated_text(disp.buffer, 'N/A', (10, 20), 270, font1,
+                      fill=(255, 255, 255))
+    draw_rotated_text(disp.buffer, 'rssi', (30, 100), 270, font2, fill=(0, 255, 0))
+    draw_rotated_text(disp.buffer, 'N/A', (10, 100), 270, font1,
+                      fill=(255, 255, 255))
     disp.display()
 
 
@@ -153,7 +159,14 @@ def change_channel():
         channel = channel+1
     sp.write('setchannel '+format(channel, 'X'))
     disp.clear()
-    draw_rotated_text(disp.buffer, 'channel: ' + str(channel), (80, 20), 270, font, fill=(255, 255, 255))
+    draw_rotated_text(disp.buffer, 'Channel', (55, 20), 270, font2, fill=(0, 255, 0))
+    draw_rotated_text(disp.buffer, str(channel), (50, 80), 270, font1, fill=(255, 255, 255))
+    draw_rotated_text(disp.buffer, 'LQI', (30, 20), 270, font2, fill=(0, 255, 0))
+    draw_rotated_text(disp.buffer, 'N/A', (10, 20), 270, font1,
+                      fill=(255, 255, 255))
+    draw_rotated_text(disp.buffer, 'rssi', (30, 100), 270, font2, fill=(0, 255, 0))
+    draw_rotated_text(disp.buffer, 'N/A', (10, 100), 270, font1,
+                      fill=(255, 255, 255))
     disp.display()
     print('changed to channel ' + str(channel))
 
@@ -174,64 +187,81 @@ def checkdata():
 
 
 def starttest():
-    if rxtxmode() == 1:
-        print('enter tx mode send tx0')
-        sp.write('tx 0')
-        disp.clear()
-        draw_rotated_text(disp.buffer, 'TX mode', (30,20), 270, font, fill=(255, 255, 255))
-        draw_rotated_text(disp.buffer, 'Channel: ' + str(channel), (80, 20), 270, font, fill=(255, 255, 255))
-        disp.display()
+    while not stopbtn.is_pressed:
+        #stopbtn.is_pressed = menu
+        if rxtxmode() == 1:
+            print('enter tx mode send tx0')
+            sp.write('tx 0')
+            disp.clear()
+            draw_rotated_text(disp.buffer, 'TX mode', (90,40), 270, font1, fill=(255, 255, 255))
+            draw_rotated_text(disp.buffer, 'Channel', (55, 20), 270, font2, fill=(0, 255, 0))
+            draw_rotated_text(disp.buffer, str(channel), (50, 80), 270, font1, fill=(255, 255, 255))
+            disp.display()
 
-    else:
-        print('enter rx mode recving')
-        sp.write('rx')
-        #while not output_queue.empty():
-        #checkdata()
-        if not output_queue.empty():
-            if output_queue.get().split('{')[7][0:4] == '0xFF':
-                print('good')
-                print('rssi')
-                print((output_queue.get().split('{')[8][0:3]))
-                disp.clear()
-                draw_rotated_text(disp.buffer, 'GOOD', (30, 20), 270, font, fill=(255, 255, 255))
-                draw_rotated_text(disp.buffer,'rssi: '+(output_queue.get().split('{')[8][0:3]), (80, 20), 270, font, fill=(255, 255, 255))
-                disp.display()
-                output_queue.queue.clear()
+        else:
+            print('enter rx mode recving')
+            sp.write('rx')
+            #while not output_queue.empty():
+            #checkdata()
+            if not output_queue.empty():
+                if output_queue.get().split('{')[7][0:4] == '0xFF':
+                    print('good')
+                    print('rssi')
+                    print((output_queue.get().split('{')[8][0:3]))
+                    disp.clear()
+                    #draw_rotated_text(disp.buffer, 'GOOD', (30, 20), 270, font2, fill=(255, 255, 255))
+                    draw_rotated_text(disp.buffer, 'GOOD', (90, 40), 0, font1, fill=(255, 255, 255))
+                    draw_rotated_text(disp.buffer, 'Channel', (55, 20), 0, font2, fill=(0, 255, 0))
+                    draw_rotated_text(disp.buffer, str(channel), (50, 80), 0, font1, fill=(255, 255, 255))
+                    draw_rotated_text(disp.buffer, 'LQI', (30, 20), 0, font2, fill=(0, 255, 0))
+                    draw_rotated_text(disp.buffer, (output_queue.get().split('{')[7][0:4]), (10, 20), 270, font1, fill=(255, 255, 255))
+                    draw_rotated_text(disp.buffer, 'rssi', (30, 100), 0, font2, fill=(0, 255, 0))
+                    draw_rotated_text(disp.buffer, (output_queue.get().split('{')[8][0:3]), (10, 100), 0, font1, fill=(255, 255, 255))
+                    disp.display()
+                    output_queue.queue.clear()
+                else:
+                    print('bad')
+                    print('rssi')
+                    print((output_queue.get().split('{')[8][0:3]))
+                    disp.clear()
+                    draw_rotated_text(disp.buffer, 'BAD', (90, 40), 0, font1, fill=(255, 255, 255))
+                    draw_rotated_text(disp.buffer, 'Channel', (55, 20), 0, font2, fill=(0, 255, 0))
+                    draw_rotated_text(disp.buffer, str(channel), (50, 80), 0, font1, fill=(255, 255, 255))
+                    draw_rotated_text(disp.buffer, 'LQI', (30, 20), 0, font2, fill=(0, 255, 0))
+                    draw_rotated_text(disp.buffer, (output_queue.get().split('{')[7][0:4]), (10, 20), 270, font1,
+                                      fill=(255, 255, 255))
+                    draw_rotated_text(disp.buffer, 'rssi', (30, 100), 0, font2, fill=(0, 255, 0))
+                    draw_rotated_text(disp.buffer, (output_queue.get().split('{')[8][0:3]), (10, 100), 270, font1,
+                                      fill=(255, 255, 255))
+                    disp.display()
+                    output_queue.queue.clear()
             else:
-                print('bad')
-                print('rssi')
-                print((output_queue.get().split('{')[8][0:3]))
+                print('no data')
                 disp.clear()
-                draw_rotated_text(disp.buffer, 'BAD', (30, 20), 270, font, fill=(255, 255, 255))
-                draw_rotated_text(disp.buffer,'rssi: '+(output_queue.get().split('{')[8][0:3]), (80, 20), 270, font,fill=(255, 255, 255))
+                draw_rotated_text(disp.buffer, 'NO DATA', (10, 10), 0, font1, fill=(0, 0, 255))
+                draw_rotated_text(disp.buffer, 'CHANNEL', (10, 100), 0, font2, fill=(0, 255, 0))
+                draw_rotated_text(disp.buffer, str(channel), (75, 90), 0, font1, fill=(255, 255, 255))
+                draw_rotated_text(disp.buffer, 'LQI', (10, 120), 0, font2, fill=(0, 255, 0))
+                draw_rotated_text(disp.buffer, 'N/A', (10, 130), 0, font1,fill=(255, 255, 255))
+                draw_rotated_text(disp.buffer, 'rssi', (70, 120), 0, font2, fill=(0, 255, 0))
+                draw_rotated_text(disp.buffer, 'N/A', (70, 130), 0, font1,fill=(255, 255, 255))
                 disp.display()
-                output_queue.queue.clear()
-        else:
-            print('no data')
-            disp.clear()
-            draw_rotated_text(disp.buffer, 'no data', (30, 50), 270, font, fill=(255, 255, 255))
-            disp.display()
-            output_queue.queue.clear()
-        '''
-        if output_queue.qsize() > 10:
-            for i in range(10):
-                print((output_queue.get().split('{')[7][0:4]))
-                print((output_queue.get().split('{')[8][0:3]))
+            '''
+            if output_queue.qsize() > 10:
+                for i in range(10):
+                    print((output_queue.get().split('{')[7][0:4]))
+                    print((output_queue.get().split('{')[8][0:3]))
+                    disp.clear()
+                    draw_rotated_text(disp.buffer, 'lqi:'+(output_queue.get().split('{')[7][0:4]), (30, 50), 90, font,fill=(255, 255, 255))
+                    disp.display()
+            else:
+                print('no data to print')
                 disp.clear()
-                draw_rotated_text(disp.buffer, 'lqi:'+(output_queue.get().split('{')[7][0:4]), (30, 50), 90, font,fill=(255, 255, 255))
+                draw_rotated_text(disp.buffer, 'no data', (30, 50), 90, font, fill=(255, 255, 255))
                 disp.display()
-        else:
-            print('no data to print')
-            disp.clear()
-            draw_rotated_text(disp.buffer, 'no data', (30, 50), 90, font, fill=(255, 255, 255))
-            disp.display()
-        '''
-        output_queue.queue.clear()
+            '''
+            sleep(1)
 
-def longmode():
-    print('here')
-    pause()
-    print('after pause')
 
 input_queue = queue.Queue()
 output_queue = queue.Queue()
@@ -249,17 +279,15 @@ def io_jobs():
 
         if sp.in_Waiting() > 0:
             data = sp.read()
-            if len(data) > 80:
+            if len(data) > 80 and (output_queue.get().split('{')[7][0:2]) == '0x':
                 output_queue.put(data)
 
 
-if __name__ == '__main__':
+def menu():
     while True:
         time()
-        sp = SerialProcess()
         while not sp.is_open():
             sleep(1)
-            sp = SerialProcess()
             print('port is open')
         try:
             t = threading.Thread(target=io_jobs)
@@ -267,11 +295,18 @@ if __name__ == '__main__':
             startbtn.when_released = starttest
             channelbtn.when_pressed = change_channel
             stopbtn.when_pressed = stoptest
-            startbtn.when_held = longmode
             pause()
 
         except Exception as e:
             sp.close()
             raise
         sp.close()
+
+
+sp = SerialProcess()
+if __name__ == '__main__':
+    sp.write('setTxPowMode 10')
+    sp.write('setTxPower 8')
+    sp.write('setchannel B')
+    menu()
 
