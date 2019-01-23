@@ -76,10 +76,6 @@ def power_mode():
         power = -8
 
     input_queue.put('setTxPower ' + format(power, 'X'))
-    print('power changed to ' + str(power))
-    # print('sended stop')
-    # input_queue.put('e')
-    # print('stop sended')
 
 
 def channels():
@@ -113,8 +109,7 @@ def start():
             else:
                 lcd.redraw(channel, 'NO DATA', (output_queue.get().split('{')[7][0:4]), (output_queue.get().split('{')[8][0:3]))
 
-    sp.write('e')
-    print('stoped')
+    input_queue.put('e')
     lcd.redraw(channel, 'STOPED', 'N/A', 'N/A')
 
 
