@@ -83,7 +83,6 @@ def draw_rotated_text(image, text, position, angle, font, fill=(255,255,255)):
 disp.display()
 
 
-
 class SerialProcess():
 
     def in_Waiting(self):
@@ -137,15 +136,13 @@ def stoptest():
     sp.write('e')
     print('stop sended')
     disp.clear()
-    draw_rotated_text(disp.buffer, 'STOPED ', (90, 40), 270, font1, fill=(255, 255, 255))
-    draw_rotated_text(disp.buffer, 'Channel', (55, 20), 270, font2, fill=(0, 255, 0))
-    draw_rotated_text(disp.buffer, str(channel), (50, 80), 270, font1, fill=(255, 255, 255))
-    draw_rotated_text(disp.buffer, 'LQI', (30, 20), 270, font2, fill=(0, 255, 0))
-    draw_rotated_text(disp.buffer, 'N/A', (10, 20), 270, font1,
-                      fill=(255, 255, 255))
-    draw_rotated_text(disp.buffer, 'rssi', (30, 100), 270, font2, fill=(0, 255, 0))
-    draw_rotated_text(disp.buffer, 'N/A', (10, 100), 270, font1,
-                      fill=(255, 255, 255))
+    draw_rotated_text(disp.buffer, 'STOPED ', (10, 10), 0, font1, fill=(255, 255, 255))
+    draw_rotated_text(disp.buffer, 'CHANNEL', (10, 100), 0, font2, fill=(0, 255, 0))
+    draw_rotated_text(disp.buffer, str(channel), (75, 90), 0, font1, fill=(255, 255, 255))
+    draw_rotated_text(disp.buffer, 'LQI', (10, 120), 0, font2, fill=(0, 255, 0))
+    draw_rotated_text(disp.buffer, 'N/A', (10, 130), 0, font1,fill=(255, 255, 255))
+    draw_rotated_text(disp.buffer, 'RSSI', (70, 120), 0, font2, fill=(0, 255, 0))
+    draw_rotated_text(disp.buffer, 'N/A', (70, 130), 0, font1,fill=(255, 255, 255))
     disp.display()
 
 
@@ -159,14 +156,12 @@ def change_channel():
         channel = channel+1
     sp.write('setchannel '+format(channel, 'X'))
     disp.clear()
-    draw_rotated_text(disp.buffer, 'Channel', (55, 20), 270, font2, fill=(0, 255, 0))
-    draw_rotated_text(disp.buffer, str(channel), (50, 80), 270, font1, fill=(255, 255, 255))
-    draw_rotated_text(disp.buffer, 'LQI', (30, 20), 270, font2, fill=(0, 255, 0))
-    draw_rotated_text(disp.buffer, 'N/A', (10, 20), 270, font1,
-                      fill=(255, 255, 255))
-    draw_rotated_text(disp.buffer, 'rssi', (30, 100), 270, font2, fill=(0, 255, 0))
-    draw_rotated_text(disp.buffer, 'N/A', (10, 100), 270, font1,
-                      fill=(255, 255, 255))
+    draw_rotated_text(disp.buffer, 'CHANNEL', (10, 100), 0, font2, fill=(0, 255, 0))
+    draw_rotated_text(disp.buffer, str(channel), (75, 90), 0, font1, fill=(255, 255, 255))
+    draw_rotated_text(disp.buffer, 'LQI', (10, 120), 0, font2, fill=(0, 255, 0))
+    draw_rotated_text(disp.buffer, 'N/A', (10, 130), 0, font1, fill=(255, 255, 255))
+    draw_rotated_text(disp.buffer, 'RSSI', (70, 120), 0, font2, fill=(0, 255, 0))
+    draw_rotated_text(disp.buffer, 'N/A', (70, 130), 0, font1, fill=(255, 255, 255))
     disp.display()
     print('changed to channel ' + str(channel))
 
@@ -174,14 +169,9 @@ def change_channel():
 '''
 def signaling():
     for i in range(10):
-        if output_queue.get().split('{')[7][0:4] == '0xFF':
+        if output_queue.get().split('{')[7][0:2] == '0x':
 '''
-'''
-def checkdata():
-    if output_queue.qsize()<10:
-        return 0
-    else:
-'''
+
 
 
 
@@ -193,9 +183,9 @@ def starttest():
             print('enter tx mode send tx0')
             sp.write('tx 0')
             disp.clear()
-            draw_rotated_text(disp.buffer, 'TX mode', (90,40), 270, font1, fill=(255, 255, 255))
-            draw_rotated_text(disp.buffer, 'Channel', (55, 20), 270, font2, fill=(0, 255, 0))
-            draw_rotated_text(disp.buffer, str(channel), (50, 80), 270, font1, fill=(255, 255, 255))
+            draw_rotated_text(disp.buffer, 'TX mode', (10 ,10), 0, font1, fill=(255, 255, 255))
+            draw_rotated_text(disp.buffer, 'Channel', (10, 100), 0, font2, fill=(0, 255, 0))
+            draw_rotated_text(disp.buffer, str(channel), (75, 90), 0, font1, fill=(255, 255, 255))
             disp.display()
 
         else:
@@ -206,17 +196,16 @@ def starttest():
             if not output_queue.empty():
                 if output_queue.get().split('{')[7][0:4] == '0xFF':
                     print('good')
-                    print('rssi')
+                    print('lqi')
                     print((output_queue.get().split('{')[8][0:3]))
                     disp.clear()
-                    #draw_rotated_text(disp.buffer, 'GOOD', (30, 20), 270, font2, fill=(255, 255, 255))
-                    draw_rotated_text(disp.buffer, 'GOOD', (90, 40), 0, font1, fill=(255, 255, 255))
-                    draw_rotated_text(disp.buffer, 'Channel', (55, 20), 0, font2, fill=(0, 255, 0))
-                    draw_rotated_text(disp.buffer, str(channel), (50, 80), 0, font1, fill=(255, 255, 255))
-                    draw_rotated_text(disp.buffer, 'LQI', (30, 20), 0, font2, fill=(0, 255, 0))
-                    draw_rotated_text(disp.buffer, (output_queue.get().split('{')[7][0:4]), (10, 20), 270, font1, fill=(255, 255, 255))
-                    draw_rotated_text(disp.buffer, 'rssi', (30, 100), 0, font2, fill=(0, 255, 0))
-                    draw_rotated_text(disp.buffer, (output_queue.get().split('{')[8][0:3]), (10, 100), 0, font1, fill=(255, 255, 255))
+                    draw_rotated_text(disp.buffer, 'GOOD', (10, 10), 0, font1, fill=(0, 0, 255))
+                    draw_rotated_text(disp.buffer, 'CHANNEL', (10, 100), 0, font2, fill=(0, 255, 0))
+                    draw_rotated_text(disp.buffer, str(channel), (75, 90), 0, font1, fill=(255, 255, 255))
+                    draw_rotated_text(disp.buffer, 'LQI', (10, 120), 0, font2, fill=(0, 255, 0))
+                    draw_rotated_text(disp.buffer, (output_queue.get().split('{')[7][0:4]), (10, 130), 0, font1, fill=(255, 255, 255))
+                    draw_rotated_text(disp.buffer, 'RSSI', (70, 120), 0, font2, fill=(0, 255, 0))
+                    draw_rotated_text(disp.buffer, (output_queue.get().split('{')[8][0:3]), (70, 130), 0, font1, fill=(255, 255, 255))
                     disp.display()
                     output_queue.queue.clear()
                 else:
@@ -224,15 +213,14 @@ def starttest():
                     print('rssi')
                     print((output_queue.get().split('{')[8][0:3]))
                     disp.clear()
-                    draw_rotated_text(disp.buffer, 'BAD', (90, 40), 0, font1, fill=(255, 255, 255))
-                    draw_rotated_text(disp.buffer, 'Channel', (55, 20), 0, font2, fill=(0, 255, 0))
-                    draw_rotated_text(disp.buffer, str(channel), (50, 80), 0, font1, fill=(255, 255, 255))
-                    draw_rotated_text(disp.buffer, 'LQI', (30, 20), 0, font2, fill=(0, 255, 0))
-                    draw_rotated_text(disp.buffer, (output_queue.get().split('{')[7][0:4]), (10, 20), 270, font1,
-                                      fill=(255, 255, 255))
-                    draw_rotated_text(disp.buffer, 'rssi', (30, 100), 0, font2, fill=(0, 255, 0))
-                    draw_rotated_text(disp.buffer, (output_queue.get().split('{')[8][0:3]), (10, 100), 270, font1,
-                                      fill=(255, 255, 255))
+                    draw_rotated_text(disp.buffer, 'BAD', (10, 10), 0, font1, fill=(0, 0, 255))
+                    draw_rotated_text(disp.buffer, 'CHANNEL', (10, 100), 0, font2, fill=(0, 255, 0))
+                    draw_rotated_text(disp.buffer, str(channel), (75, 90), 0, font1, fill=(255, 255, 255))
+                    draw_rotated_text(disp.buffer, 'LQI', (10, 120), 0, font2, fill=(0, 255, 0))
+                    draw_rotated_text(disp.buffer, (output_queue.get().split('{')[7][0:4]), (10, 130), 0, font1, fill=(255, 255, 255))
+                    draw_rotated_text(disp.buffer, 'RSSI', (70, 120), 0, font2, fill=(0, 255, 0))
+                    draw_rotated_text(disp.buffer, (output_queue.get().split('{')[8][0:3]), (70, 130), 0, font1, fill=(255, 255, 255))
+                    disp.display()
                     disp.display()
                     output_queue.queue.clear()
             else:
@@ -243,23 +231,9 @@ def starttest():
                 draw_rotated_text(disp.buffer, str(channel), (75, 90), 0, font1, fill=(255, 255, 255))
                 draw_rotated_text(disp.buffer, 'LQI', (10, 120), 0, font2, fill=(0, 255, 0))
                 draw_rotated_text(disp.buffer, 'N/A', (10, 130), 0, font1,fill=(255, 255, 255))
-                draw_rotated_text(disp.buffer, 'rssi', (70, 120), 0, font2, fill=(0, 255, 0))
+                draw_rotated_text(disp.buffer, 'RSSI', (70, 120), 0, font2, fill=(0, 255, 0))
                 draw_rotated_text(disp.buffer, 'N/A', (70, 130), 0, font1,fill=(255, 255, 255))
                 disp.display()
-            '''
-            if output_queue.qsize() > 10:
-                for i in range(10):
-                    print((output_queue.get().split('{')[7][0:4]))
-                    print((output_queue.get().split('{')[8][0:3]))
-                    disp.clear()
-                    draw_rotated_text(disp.buffer, 'lqi:'+(output_queue.get().split('{')[7][0:4]), (30, 50), 90, font,fill=(255, 255, 255))
-                    disp.display()
-            else:
-                print('no data to print')
-                disp.clear()
-                draw_rotated_text(disp.buffer, 'no data', (30, 50), 90, font, fill=(255, 255, 255))
-                disp.display()
-            '''
             sleep(1)
 
 
@@ -279,7 +253,7 @@ def io_jobs():
 
         if sp.in_Waiting() > 0:
             data = sp.read()
-            if len(data) > 80 and (output_queue.get().split('{')[7][0:2]) == '0x':
+            if len(data) > 80:
                 output_queue.put(data)
 
 
