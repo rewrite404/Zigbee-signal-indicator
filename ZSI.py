@@ -72,7 +72,7 @@ def is_tx():
 def power_mode():
     global power
     power += 1
-    if power == 8:
+    if power == 9:
         power = -8
 
     input_queue.put('setTxPower ' + format(power, 'X'))
