@@ -12,10 +12,11 @@ from lcd import Lcd
 
 jmp = Button(21)
 # btn37 = Button(26)
-stopbtn = Button(19)
-channelbtn = Button(13)
+btn_power = Button(19)
+btn_channel = Button(13)
 startbtn = Button(6, hold_time=5)
 channel = 11
+power = 8
 #bz = Buzzer(12)
 #bz.beep(on_time=3)
 
@@ -57,36 +58,46 @@ class SerialProcess:
         return data
 
 
+input_queue = queue.Queue()
+output_queue = queue.Queue()
+
 sp = SerialProcess()
 lcd = Lcd()
 
 
-def isTx():
-    return jmp.is_pressed
+def is_tx():
+    return not jmp.is_pressed
 
 
-def stop():
-    print('sended stop')
-    input_queue.put('e')
-    print('stop sended')
+def power_mode():
+    global power
+    power += 1
+    if power == 8:
+        power = -8
+
+    input_queue.put('setTxPower ' + format(power, 'X'))
+    print('power changed to ' + str(power))
+    # print('sended stop')
+    # input_queue.put('e')
+    # print('stop sended')
 
 
 def channels():
-    print('try to change channel')
+    print('change channel')
     input_queue.put('e')
     global channel
-    if channel == 25:
+    channel += 1
+    if channel == 27:
         channel = 11
-    else:
-        channel = channel+1
+
     input_queue.put('setchannel '+format(channel, 'X'))
     lcd.redraw(channel, 'CHANNEL', 'N/A', 'N/A')
 
 
-
 def start():
-    while not stopbtn.is_pressed:
-        if isTx():
+    sleep(1)
+    while not startbtn.is_pressed:
+        if is_tx():
             input_queue.put('tx 0')
             lcd.redraw(channel, 'TX mode', 'N/A', 'N/A')
         else:
@@ -102,9 +113,9 @@ def start():
             else:
                 lcd.redraw(channel, 'NO DATA', (output_queue.get().split('{')[7][0:4]), (output_queue.get().split('{')[8][0:3]))
 
-
-input_queue = queue.Queue()
-output_queue = queue.Queue()
+    sp.write('e')
+    print('stoped')
+    lcd.redraw(channel, 'STOPED', 'N/A', 'N/A')
 
 
 def io_jobs():
@@ -125,16 +136,15 @@ def io_jobs():
 
 def main():
     while True:
-        time()
         while not sp.is_open():
-            sleep(1)
             print('port is open')
+
         try:
             t = threading.Thread(target=io_jobs)
             t.start()
-            startbtn.when_released = start
-            channelbtn.when_pressed = channels
-            stopbtn.when_pressed = stop
+            startbtn.when_pressed = start
+            btn_channel.when_pressed = channels
+            btn_power.when_pressed = power_mode
             pause()
 
         except Exception as e:
@@ -144,7 +154,8 @@ def main():
 
 
 if __name__ == '__main__':
-    if isTx():
+    time()
+    if is_tx():
         print("Tx Mode")
         input_queue.put('setTxPowMode 10')
         input_queue.put('setTxPower 8')
