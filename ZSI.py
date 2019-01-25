@@ -1,6 +1,5 @@
 import multiprocessing
 from gpiozero import Button
-from gpiozero import PWMLED
 from signal import pause
 from time import sleep, time
 
@@ -15,10 +14,9 @@ jmp = Button(21)
 # btn37 = Button(26)
 btn_power = Button(19)
 btn_channel = Button(13)
-startbtn = Button(6, hold_time=5)
+btn_start = Button(6, hold_time=5)
 channel = 11
 power = 8
-
 
 
 class SerialProcess:
@@ -80,7 +78,6 @@ def power_mode():
 
 
 def channels():
-    print('change channel')
     input_queue.put('e')
     global channel
     channel += 1
@@ -93,7 +90,7 @@ def channels():
 
 def start():
     sleep(1)
-    while not startbtn.is_pressed:
+    while not btn_start.is_pressed:
         if is_tx():
             input_queue.put('tx 0')
             lcd.redraw(channel, 'TX mode', 'N/A', 'N/A')
@@ -117,7 +114,7 @@ def start():
 def io_jobs():
     sp.flush_Input()
     sp.flush_Output()
-    while True:
+    while sp.is_open():
         if not input_queue.empty():
             data = input_queue.get()
             # send it to the serial device
@@ -131,19 +128,21 @@ def io_jobs():
 
 
 def test():
-    buzzer.rebuz(0.5)
+    buzzer.buzz(0.5)
     print('exit buzzer')
 
 
 def main():
     while True:
+        global sp
         while not sp.is_open():
+            sp = SerialProcess()
             print('port is open')
 
         try:
             t = threading.Thread(target=io_jobs)
             t.start()
-            startbtn.when_pressed = start
+            btn_start.when_pressed = start
             btn_channel.when_pressed = channels
             btn_power.when_pressed = test
             pause()
@@ -153,6 +152,7 @@ def main():
             sp.close()
             raise
         sp.close()
+
 
 
 if __name__ == '__main__':
