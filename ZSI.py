@@ -6,17 +6,27 @@ from time import sleep, time
 import serial as serial
 import threading
 import queue
-
+import statistics
+from enum import Enum
 from lcd import Lcd
 from buzzer import Buzzer
+
+
+class Mode(Enum):
+    START_MODE = '@'
+    STOP_MODE = '#'
+    CHANNEL_MODE = '$'
+    IDLE_MODE = '%'
+
 
 jmp = Button(21)
 # btn37 = Button(26)
 btn_power = Button(19)
 btn_channel = Button(13)
-btn_start = Button(6, hold_time=5)
+btn_start = Button(6)
 channel = 11
 power = 8
+current_mode = ''
 
 
 class SerialProcess:
@@ -40,6 +50,14 @@ class SerialProcess:
                                          writeTimeout=5,
                                          rtscts=True,
                                          timeout=5)
+
+        if self.zigbee_uart.is_open:
+            input_queue.put('setchannel '+format(channel, 'X'))
+            if is_tx():
+                input_queue.put('setTxPowMode 10')
+                input_queue.put('settxpower ' + format(power, 'X'))
+
+
 
     def is_open(self):
         return self.zigbee_uart.isOpen()
@@ -74,70 +92,110 @@ def power_mode():
     if power == 9:
         power = -8
 
-    input_queue.put('setTxPower ' + format(power, 'X'))
+    input_queue.put('settxpower ' + format(power, 'X'))
 
 
 def channels():
-    input_queue.put('e')
-    global channel
+    global current_mode, channel
+    if current_mode == Mode.START_MODE:
+        current_mode = Mode.CHANNL_MODE
+        sleep(0.2)
+        input_queue.put('e')
+        btn_start.when_pressed = start
+
+    current_mode = Mode.CHANNL_MODE
+
     channel += 1
     if channel == 27:
         channel = 11
 
     input_queue.put('setchannel '+format(channel, 'X'))
-    lcd.redraw(channel, 'CHANNEL', 'N/A', 'N/A')
+
+
+def stop():
+    global current_mode
+    if current_mode == Mode.START_MODE:
+        current_mode = Mode.STOP_MODE
+        input_queue.put('e')
+    btn_start.when_pressed = start
 
 
 def start():
-    sleep(1)
-    while not btn_start.is_pressed:
+    global current_mode
+    if current_mode != Mode.START_MODE:
+        current_mode = Mode.START_MODE
         if is_tx():
             input_queue.put('tx 0')
-            lcd.redraw(channel, 'TX mode', 'N/A', 'N/A')
         else:
             input_queue.put('rx')
 
-            if not output_queue.empty():
-                if output_queue.get().split('{')[7][0:4] == '0xFF':
-                    lcd.redraw(channel, 'GOOD', (output_queue.get().split('{')[7][0:4]), (output_queue.get().split('{')[8][0:3]))
-                    output_queue.queue.clear()
-                    buzzer.buzz(0.3)
-                else:
-                    lcd.redraw(channel, 'BAD', (output_queue.get().split('{')[7][0:4]), (output_queue.get().split('{')[8][0:3]))
-                    output_queue.queue.clear()
-                    buzzer.buzz(0.5)
-            else:
-                lcd.redraw(channel, 'NO DATA', (output_queue.get().split('{')[7][0:4]), (output_queue.get().split('{')[8][0:3]))
-                buzzer.buzz(1)
-
-    input_queue.put('e')
-    lcd.redraw(channel, 'STOPED', 'N/A', 'N/A')
+    btn_start.when_pressed = stop
 
 
 def io_jobs():
     sp.flush_Input()
     sp.flush_Output()
+
+    rssi = []
+    lqi = []
     while sp.is_open():
         if not input_queue.empty():
             data = input_queue.get()
             # send it to the serial device
+            if data == 'e':
+                sp.flush_Input()
+                sp.flush_Output()
+                output_queue.queue.clear()
+                input_queue.queue.clear()
+
             sp.write(data)
             print(data)
 
-        if sp.in_Waiting() > 0:
+        if sp.in_Waiting() > 0 and current_mode == Mode.START_MODE:
             data = sp.read()
             if len(data) > 80:
-                output_queue.put(data)
+                r = (data.split('{')[8][0:3])
+                l = (data.split('{')[7][0:4])
+                try:
+                    int(r)
+                    rssi.append(r)
+                    lqi.append(int(l, 16))
+                except ValueError:
+                    continue
 
+                if len(rssi) > 16:
+                    try:
+                        x = statistics.mode(rssi)
+                        y = statistics.mode(lqi)
+                        rssi[:] = []
+                        lqi[:] = []
+                        output_queue.put(data)
+                        print('mode RSSI:{}, LQI: {}'.format(repr(x), repr(y)))
+                        if y == 255:
+                            lcd.redraw(channel, 'Good', str(y), str(x))
+                        else:
+                            lcd.redraw(channel, 'Bad', str(y), str(x))
+                    except statistics.StatisticsError:
+                        continue
 
-def test():
-    buzzer.buzz(0.5)
-    print('exit buzzer')
+        if current_mode == Mode.STOP_MODE:
+            lcd.redraw(channel, 'STOPED', 'N/A', 'N/A')
+        elif current_mode == Mode.CHANNL_MODE:
+            lcd.redraw(channel, 'CHANNEL', 'N/A', 'N/A')
+        elif current_mode == Mode.IDLE_MODE:
+            lcd.redraw(channel, 'IDLE', 'N/A', 'N/A')
+        elif current_mode == Mode.START_MODE:
+            if is_tx():
+                lcd.redraw(channel, 'Transmit', 'N/A', 'N/A')
+            else:
+                lcd.redraw(channel, 'Receive', 'N/A', 'N/A')
+
+        sleep(.01)
 
 
 def main():
+    global sp, current_mode
     while True:
-        global sp
         while not sp.is_open():
             sp = SerialProcess()
             print('port is open')
@@ -148,25 +206,20 @@ def main():
             btn_start.when_pressed = start
             btn_channel.when_pressed = channels
             btn_power.when_pressed = power_mode
+            current_mode = Mode.IDLE_MODE
             pause()
-
-        except Exception as e:
-            print('error123')
+        except Exception:
             sp.close()
             raise
         sp.close()
-
 
 
 if __name__ == '__main__':
     time()
     if is_tx():
         print("Tx Mode")
-        input_queue.put('setTxPowMode 10')
-        input_queue.put('setTxPower 8')
     else:
         print("Rx mode")
 
-    input_queue.put('setchannel B')
     main()
 
