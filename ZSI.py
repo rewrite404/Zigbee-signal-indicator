@@ -1,6 +1,6 @@
 import multiprocessing
-from gpiozero import Buzzer
 from gpiozero import Button
+from gpiozero import PWMLED
 from signal import pause
 from time import sleep, time
 
@@ -9,6 +9,7 @@ import threading
 import queue
 
 from lcd import Lcd
+from buzzer import Buzzer
 
 jmp = Button(21)
 # btn37 = Button(26)
@@ -17,8 +18,7 @@ btn_channel = Button(13)
 startbtn = Button(6, hold_time=5)
 channel = 11
 power = 8
-#bz = Buzzer(12)
-#bz.beep(on_time=3)
+
 
 
 class SerialProcess:
@@ -63,6 +63,7 @@ output_queue = queue.Queue()
 
 sp = SerialProcess()
 lcd = Lcd()
+buzzer = Buzzer()
 
 
 def is_tx():
@@ -129,6 +130,11 @@ def io_jobs():
                 output_queue.put(data)
 
 
+def test():
+    buzzer.rebuz(0.5)
+    print('exit buzzer')
+
+
 def main():
     while True:
         while not sp.is_open():
@@ -139,10 +145,11 @@ def main():
             t.start()
             startbtn.when_pressed = start
             btn_channel.when_pressed = channels
-            btn_power.when_pressed = power_mode
+            btn_power.when_pressed = test
             pause()
 
         except Exception as e:
+            print('error123')
             sp.close()
             raise
         sp.close()
