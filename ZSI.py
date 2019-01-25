@@ -101,11 +101,14 @@ def start():
                 if output_queue.get().split('{')[7][0:4] == '0xFF':
                     lcd.redraw(channel, 'GOOD', (output_queue.get().split('{')[7][0:4]), (output_queue.get().split('{')[8][0:3]))
                     output_queue.queue.clear()
+                    buzzer.buzz(0.3)
                 else:
                     lcd.redraw(channel, 'BAD', (output_queue.get().split('{')[7][0:4]), (output_queue.get().split('{')[8][0:3]))
                     output_queue.queue.clear()
+                    buzzer.buzz(0.5)
             else:
                 lcd.redraw(channel, 'NO DATA', (output_queue.get().split('{')[7][0:4]), (output_queue.get().split('{')[8][0:3]))
+                buzzer.buzz(1)
 
     input_queue.put('e')
     lcd.redraw(channel, 'STOPED', 'N/A', 'N/A')
@@ -144,7 +147,7 @@ def main():
             t.start()
             btn_start.when_pressed = start
             btn_channel.when_pressed = channels
-            btn_power.when_pressed = test
+            btn_power.when_pressed = power_mode
             pause()
 
         except Exception as e:
