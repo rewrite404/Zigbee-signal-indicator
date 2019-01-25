@@ -15,9 +15,9 @@ class Buzzer:
 
     def beep(self, freq):
         self.p.ChangeFrequency(freq)
-        self.p.start(100)
+        self.p.start(50)
         sleep(0.05)
-        self.p.stop(100)
+        self.p.stop(50)
 
     def buzz(self, gap):
         for x in range(6):
