@@ -38,7 +38,7 @@ class Lcd:
         # Paste the text into the image, using it as a mask for transparency.
         image.paste(rotated, position, rotated)
 
-    def redraw(self, channel, state='N/A', lqi='N/A', rssi='N/A',):
+    def redraw(self, channel, state='N/A', lqi='N/A', rssi='N/A', power=None):
         if state == 'Receive':
             return
         self.display.clear()
@@ -58,6 +58,10 @@ class Lcd:
             self.draw.rectangle((70, 40, 90, 50), outline=(0, 245, 255), fill=(0, 245, 255))
             self.draw.rectangle((90, 40, 118, 50), outline=(0, 255, 0), fill=(0, 255, 0))
         self.signal_state = state
+        if not (power is None):
+            self.draw_rotated_text(self.display.buffer, 'POWER', (10, 75), 0, self.label_font, fill=(0, 255, 0))
+            self.draw_rotated_text(self.display.buffer, str(power), (75, 65), 0, self.font1, fill=(255, 255, 255))
+
         self.draw_rotated_text(self.display.buffer, 'CHANNEL', (10, 100), 0, self.label_font, fill=(0, 255, 0))
         self.draw_rotated_text(self.display.buffer, str(channel), (75, 90), 0, self.font1, fill=(255, 255, 255))
         self.draw_rotated_text(self.display.buffer, 'LQI', (10, 120), 0, self.label_font, fill=(0, 255, 0))

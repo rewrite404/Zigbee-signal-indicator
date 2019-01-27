@@ -155,30 +155,47 @@ def io_jobs():
     while sp.is_open():
 
         if current_mode == Mode.STOP_MODE:
-            lcd.redraw(channel, 'STOPED', 'N/A', 'N/A')
+            if is_tx():
+                lcd.redraw(channel, 'STOPED', 'N/A', 'N/A', power)
+            else:
+                lcd.redraw(channel, 'STOPED', 'N/A', 'N/A')
+        elif current_mode == Mode.POWER_MODE:
+            if is_tx():
+                lcd.redraw(channel, 'POWER', 'N/A', 'N/A', power)
+            else:
+                lcd.redraw(channel, 'POWER', 'N/A', 'N/A')
         elif current_mode == Mode.CHANNEL_MODE:
-            lcd.redraw(channel, 'CHANNEL', 'N/A', 'N/A')
+            if is_tx():
+                lcd.redraw(channel, 'CHANNEL', 'N/A', 'N/A', power)
+            else:
+                lcd.redraw(channel, 'CHANNEL', 'N/A', 'N/A')
         elif current_mode == Mode.IDLE_MODE:
-            lcd.redraw(channel, 'IDLE', 'N/A', 'N/A')
+            if is_tx():
+                lcd.redraw(channel, 'IDLE', 'N/A', 'N/A', power)
+            else:
+                lcd.redraw(channel, 'IDLE', 'N/A', 'N/A')
         elif current_mode == Mode.START_MODE and output_queue.empty():
             if is_tx():
-                lcd.redraw(channel, 'Transmit', 'N/A', 'N/A')
+                lcd.redraw(channel, 'Transmit', 'N/A', 'N/A', power)
             else:
                 lcd.redraw(channel, 'Receive', 'N/A', 'N/A')
         elif not output_queue.empty():
-            output_queue.get()
-            if y == 255 and int(x) >= -60:
-                lcd.redraw(channel, 'Great', str(y), str(x))
-                buzzer.buzz(.1, 5000, 3)
-            elif y == 255 and -80 < int(x) < -60:
-                lcd.redraw(channel, 'Good', str(y), str(x))
-                buzzer.buzz(.3, 5000, 3)
-            elif int(y) > 240 and int(x) < -80:
-                lcd.redraw(channel, 'Bad', str(y), str(x))
-                buzzer.buzz(.5, 5000, 3)
+            if is_tx():
+                pass
             else:
-                lcd.redraw(channel, 'Poor', str(y), str(x))
-                buzzer.buzz(.7, 5000, 3)
+                output_queue.get()
+                if y == 255 and int(x) >= -60:
+                    lcd.redraw(channel, 'Great', str(y), str(x))
+                    buzzer.buzz(.1, 5000, 3)
+                elif y == 255 and -80 < int(x) < -60:
+                    lcd.redraw(channel, 'Good', str(y), str(x))
+                    buzzer.buzz(.3, 5000, 3)
+                elif int(y) > 240 and int(x) < -80:
+                    lcd.redraw(channel, 'Bad', str(y), str(x))
+                    buzzer.buzz(.5, 5000, 3)
+                else:
+                    lcd.redraw(channel, 'Poor', str(y), str(x))
+                    buzzer.buzz(.7, 5000, 3)
         sleep(.1)
 
         if not input_queue.empty():
