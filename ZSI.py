@@ -17,6 +17,7 @@ class Mode(Enum):
     CHANNEL_MODE = '$'
     IDLE_MODE = '%'
     HOLD_MODE = '^'
+    POWER_MODE = '&'
 
 
 class SerialProcess:
@@ -66,16 +67,34 @@ def is_tx():
     return not jmp.is_pressed
 
 
+def set_power():
+    global current_mode, power
+    if current_mode != Mode.POWER_MODE:
+        return
+
+    input_queue.put('settxpower ' + format(power, 'X'))
+    current_mode = Mode.HOLD_MODE
+    buzzer.prog()
+
+
 def power_mode():
     if not is_tx():
         return
-    global power
+
+    global current_mode, power
+    if current_mode == Mode.START_MODE:
+        return
+    elif current_mode == Mode.HOLD_MODE:
+        current_mode = Mode.IDLE_MODE
+        return
+
+    current_mode = Mode.POWER_MODE
+
     power += 1
     if power == 9:
         power = -8
 
-    input_queue.put('settxpower ' + format(power, 'X'))
-    buzzer.prog()
+    buzzer.set()
 
 
 def set_channels():
@@ -201,7 +220,7 @@ def io_jobs():
 if __name__ == '__main__':
     time()
     jmp = Button(21)
-    btn_power = Button(19)
+    btn_power = Button(19, hold_time=2)
     btn_channel = Button(13, hold_time=2)
     btn_start = Button(6)
 
@@ -234,7 +253,8 @@ if __name__ == '__main__':
             btn_start.when_pressed = start
             btn_channel.when_released = channels
             btn_channel.when_held = set_channels
-            btn_power.when_pressed = power_mode
+            btn_power.when_released = power_mode
+            btn_power.when_held = set_power
             current_mode = Mode.IDLE_MODE
             pause()
         except Exception:
