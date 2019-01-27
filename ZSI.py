@@ -1,4 +1,3 @@
-import multiprocessing
 from gpiozero import Button
 from signal import pause
 from time import sleep, time
@@ -17,16 +16,7 @@ class Mode(Enum):
     STOP_MODE = '#'
     CHANNEL_MODE = '$'
     IDLE_MODE = '%'
-
-
-jmp = Button(21)
-# btn37 = Button(26)
-btn_power = Button(19)
-btn_channel = Button(13)
-btn_start = Button(6)
-channel = 11
-power = 8
-current_mode = ''
+    HOLD_MODE = '^'
 
 
 class SerialProcess:
@@ -57,8 +47,6 @@ class SerialProcess:
                 input_queue.put('setTxPowMode 10')
                 input_queue.put('settxpower ' + format(power, 'X'))
 
-
-
     def is_open(self):
         return self.zigbee_uart.isOpen()
 
@@ -74,19 +62,13 @@ class SerialProcess:
         return data
 
 
-input_queue = queue.Queue()
-output_queue = queue.Queue()
-
-sp = SerialProcess()
-lcd = Lcd()
-buzzer = Buzzer()
-
-
 def is_tx():
     return not jmp.is_pressed
 
 
 def power_mode():
+    if not is_tx():
+        return
     global power
     power += 1
     if power == 9:
@@ -95,21 +77,28 @@ def power_mode():
     input_queue.put('settxpower ' + format(power, 'X'))
 
 
+def set_channels():
+    global current_mode, channel
+    if current_mode != Mode.CHANNEL_MODE:
+        return
+
+    input_queue.put('setchannel ' + format(channel, 'X'))
+    current_mode = Mode.HOLD_MODE
+
+
 def channels():
     global current_mode, channel
     if current_mode == Mode.START_MODE:
-        current_mode = Mode.CHANNL_MODE
-        sleep(0.2)
-        input_queue.put('e')
-        btn_start.when_pressed = start
+        return
+    elif current_mode == Mode.HOLD_MODE:
+        current_mode = Mode.IDLE_MODE
+        return
 
-    current_mode = Mode.CHANNL_MODE
+    current_mode = Mode.CHANNEL_MODE
 
     channel += 1
     if channel == 27:
         channel = 11
-
-    input_queue.put('setchannel '+format(channel, 'X'))
 
 
 def stop():
@@ -139,6 +128,28 @@ def io_jobs():
     rssi = []
     lqi = []
     while sp.is_open():
+
+        if current_mode == Mode.STOP_MODE:
+            lcd.redraw(channel, 'STOPED', 'N/A', 'N/A')
+        elif current_mode == Mode.CHANNEL_MODE:
+            lcd.redraw(channel, 'CHANNEL', 'N/A', 'N/A')
+        elif current_mode == Mode.IDLE_MODE:
+            lcd.redraw(channel, 'IDLE', 'N/A', 'N/A')
+        elif current_mode == Mode.START_MODE and output_queue.empty():
+            if is_tx():
+                lcd.redraw(channel, 'Transmit', 'N/A', 'N/A')
+            else:
+                lcd.redraw(channel, 'Receive', 'N/A', 'N/A')
+        elif not output_queue.empty():
+            output_queue.get()
+            if y == 255:
+                lcd.redraw(channel, 'Good', str(y), str(x))
+                buzzer.buzz(.5, 5000)
+            else:
+                lcd.redraw(channel, 'Bad', str(y), str(x))
+
+        sleep(.1)
+
         if not input_queue.empty():
             data = input_queue.get()
             # send it to the serial device
@@ -151,7 +162,7 @@ def io_jobs():
             sp.write(data)
             print(data)
 
-        if sp.in_Waiting() > 0 and current_mode == Mode.START_MODE:
+        if sp.in_Waiting() > 1 and current_mode == Mode.START_MODE:
             data = sp.read()
             if len(data) > 80:
                 r = (data.split('{')[8][0:3])
@@ -163,38 +174,47 @@ def io_jobs():
                 except ValueError:
                     continue
 
-                if len(rssi) > 16:
+                if len(rssi) > 10:
+                    sp.flush_Input()
                     try:
                         x = statistics.mode(rssi)
                         y = statistics.mode(lqi)
                         rssi[:] = []
                         lqi[:] = []
                         output_queue.put(data)
-                        print('mode RSSI:{}, LQI: {}'.format(repr(x), repr(y)))
+                        print('RSSI:{}, LQI: {}'.format(repr(x), repr(y)))
                         if y == 255:
                             lcd.redraw(channel, 'Good', str(y), str(x))
+                            buzzer.buzz(.1, 5000, 1)
                         else:
                             lcd.redraw(channel, 'Bad', str(y), str(x))
                     except statistics.StatisticsError:
                         continue
 
-        if current_mode == Mode.STOP_MODE:
-            lcd.redraw(channel, 'STOPED', 'N/A', 'N/A')
-        elif current_mode == Mode.CHANNL_MODE:
-            lcd.redraw(channel, 'CHANNEL', 'N/A', 'N/A')
-        elif current_mode == Mode.IDLE_MODE:
-            lcd.redraw(channel, 'IDLE', 'N/A', 'N/A')
-        elif current_mode == Mode.START_MODE:
-            if is_tx():
-                lcd.redraw(channel, 'Transmit', 'N/A', 'N/A')
-            else:
-                lcd.redraw(channel, 'Receive', 'N/A', 'N/A')
 
-        sleep(.01)
+if __name__ == '__main__':
+    time()
+    jmp = Button(21)
+    btn_power = Button(19)
+    btn_channel = Button(13, hold_time=2)
+    btn_start = Button(6)
 
+    channel = 11
+    power = 8
+    current_mode = ''
 
-def main():
-    global sp, current_mode
+    input_queue = queue.Queue()
+    output_queue = queue.Queue()
+
+    sp = SerialProcess()
+    lcd = Lcd()
+    buzzer = Buzzer()
+
+    if is_tx():
+        print("Tx Mode")
+    else:
+        print("Rx mode")
+
     while True:
         while not sp.is_open():
             sp = SerialProcess()
@@ -204,7 +224,8 @@ def main():
             t = threading.Thread(target=io_jobs)
             t.start()
             btn_start.when_pressed = start
-            btn_channel.when_pressed = channels
+            btn_channel.when_released = channels
+            btn_channel.when_held = set_channels
             btn_power.when_pressed = power_mode
             current_mode = Mode.IDLE_MODE
             pause()
@@ -212,14 +233,4 @@ def main():
             sp.close()
             raise
         sp.close()
-
-
-if __name__ == '__main__':
-    time()
-    if is_tx():
-        print("Tx Mode")
-    else:
-        print("Rx mode")
-
-    main()
 
