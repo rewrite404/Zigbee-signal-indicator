@@ -75,6 +75,7 @@ def power_mode():
         power = -8
 
     input_queue.put('settxpower ' + format(power, 'X'))
+    buzzer.prog()
 
 
 def set_channels():
@@ -84,6 +85,7 @@ def set_channels():
 
     input_queue.put('setchannel ' + format(channel, 'X'))
     current_mode = Mode.HOLD_MODE
+    buzzer.prog()
 
 
 def channels():
@@ -100,6 +102,8 @@ def channels():
     if channel == 27:
         channel = 11
 
+    buzzer.set()
+
 
 def stop():
     global current_mode
@@ -107,6 +111,7 @@ def stop():
         current_mode = Mode.STOP_MODE
         input_queue.put('e')
     btn_start.when_pressed = start
+    buzzer.set()
 
 
 def start():
@@ -119,6 +124,7 @@ def start():
             input_queue.put('rx')
 
     btn_start.when_pressed = stop
+    buzzer.set()
 
 
 def io_jobs():
@@ -209,6 +215,8 @@ if __name__ == '__main__':
     sp = SerialProcess()
     lcd = Lcd()
     buzzer = Buzzer()
+
+    buzzer.start()
 
     if is_tx():
         print("Tx Mode")
