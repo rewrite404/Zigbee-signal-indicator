@@ -45,7 +45,7 @@ class SerialProcess:
         if self.zigbee_uart.is_open:
             input_queue.put('setchannel '+format(channel, 'X'))
             if is_tx():
-                input_queue.put('setTxPowMode 10')
+                input_queue.put('setTxPowMode 1 0')
                 input_queue.put('settxpower ' + format(power, 'X'))
 
     def is_open(self):
@@ -167,12 +167,18 @@ def io_jobs():
                 lcd.redraw(channel, 'Receive', 'N/A', 'N/A')
         elif not output_queue.empty():
             output_queue.get()
-            if y == 255:
+            if y == 255 and int(x) >= -60:
+                lcd.redraw(channel, 'Great', str(y), str(x))
+                buzzer.buzz(.1, 5000, 3)
+            elif y == 255 and -80 < int(x) < -60:
                 lcd.redraw(channel, 'Good', str(y), str(x))
-                buzzer.buzz(.5, 5000)
-            else:
+                buzzer.buzz(.3, 5000, 3)
+            elif int(y) > 240 and int(x) < -80:
                 lcd.redraw(channel, 'Bad', str(y), str(x))
-
+                buzzer.buzz(.5, 5000, 3)
+            else:
+                lcd.redraw(channel, 'Poor', str(y), str(x))
+                buzzer.buzz(.7, 5000, 3)
         sleep(.1)
 
         if not input_queue.empty():
@@ -208,11 +214,7 @@ def io_jobs():
                         lqi[:] = []
                         output_queue.put(data)
                         print('RSSI:{}, LQI: {}'.format(repr(x), repr(y)))
-                        if y == 255:
-                            lcd.redraw(channel, 'Good', str(y), str(x))
-                            buzzer.buzz(.1, 5000, 1)
-                        else:
-                            lcd.redraw(channel, 'Bad', str(y), str(x))
+
                     except statistics.StatisticsError:
                         continue
 
