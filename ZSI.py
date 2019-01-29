@@ -186,16 +186,16 @@ def io_jobs():
                 output_queue.get()
                 if y == 255 and int(x) >= -60:
                     lcd.redraw(channel, 'Great', str(y), str(x))
-                    buzzer.buzz(.1, 5000, 3)
+                    buzzer.buzz(.1, 2000, 3)
                 elif y == 255 and -80 < int(x) < -60:
                     lcd.redraw(channel, 'Good', str(y), str(x))
-                    buzzer.buzz(.3, 5000, 3)
+                    buzzer.buzz(.3, 2000, 3)
                 elif int(y) > 240 and int(x) < -80:
                     lcd.redraw(channel, 'Bad', str(y), str(x))
-                    buzzer.buzz(.5, 5000, 3)
+                    buzzer.buzz(.5, 2000, 3)
                 else:
                     lcd.redraw(channel, 'Poor', str(y), str(x))
-                    buzzer.buzz(.7, 5000, 3)
+                    buzzer.buzz(.7, 2000, 3)
         sleep(.1)
 
         if not input_queue.empty():
@@ -237,6 +237,10 @@ def io_jobs():
 
 
 if __name__ == '__main__':
+
+    # sudo service pigpiod start
+    # sudo service pigpiod stop
+
     time()
     jmp = Button(21)
     btn_power = Button(19, hold_time=2)

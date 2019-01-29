@@ -1,41 +1,37 @@
-import RPi.GPIO as GPIO
+import pigpio
 from time import sleep
 
 
 class Buzzer:
     """docstring for Buzzer"""
 
-    pin = 12
+    PWM_LED_PIN = 12
 
-    Short_Duration = .06
-    Long_Duration = .18
-    Low_Pitch = 2550
+    Short_Duration = .05
+    Long_Duration = .1
+    Low_Pitch = 2500
     mid_Pitch = 2750
-    High_Pitch = 3150
+    High_Pitch = 2900
 
     def __init__(self):
-        GPIO.setmode(GPIO.BCM)
-        GPIO.setup(self.pin, GPIO.OUT)
-        self.pwm = GPIO.PWM(self.pin, 100)
+        self.pi = pigpio.pi()
+        self.pi.set_mode(self.PWM_LED_PIN, pigpio.OUTPUT)
 
-    def beep(self, freq, duration):
-        self.pwm.ChangeFrequency(freq)
-        self.pwm.start(0)
-        sleep(.01)
-        for x in range(30):
-            self.pwm.ChangeDutyCycle(x)
-        sleep(duration)
-        self.pwm.stop()
+    def __del__(self):
+        self.pi.set_mode(self.PWM_LED_PIN, pigpio.INPUT)
+        self.pi.stop()
 
-    def buzz(self, gap, freq, n=1):
+    def buzz(self, duration, freq, n=1):
         for x in range(n):
-            self.beep(freq, gap)
+            self.pi.hardware_PWM(self.PWM_LED_PIN, freq, 50 * 10000)
+            sleep(duration)
+            self.pi.hardware_PWM(self.PWM_LED_PIN, freq, 0)
             sleep(.1)
 
     def start(self):
         self.buzz(self.Short_Duration, self.Low_Pitch)
-        self.buzz(self.Long_Duration, self.mid_Pitch)
-        self.buzz(self.Short_Duration * 2, self.High_Pitch)
+        self.buzz(self.Long_Duration * 2, self.mid_Pitch)
+        self.buzz(self.Long_Duration * 2, self.High_Pitch)
 
     def error(self):
         self.buzz(self.Short_Duration, self.High_Pitch, 3)
@@ -44,5 +40,7 @@ class Buzzer:
         self.buzz(self.Short_Duration, self.mid_Pitch)
 
     def prog(self):
+        self.buzz(self.Long_Duration, self.High_Pitch)
+        self.buzz(self.Short_Duration, self.mid_Pitch)
         self.buzz(self.Long_Duration, self.High_Pitch)
         self.buzz(self.Short_Duration, self.mid_Pitch)
