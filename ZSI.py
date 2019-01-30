@@ -48,6 +48,8 @@ class SerialProcess:
                 input_queue.put('setTxPowMode 1 0')
                 input_queue.put('settxpower ' + format(power, 'X'))
 
+        input_queue.put('e')
+
     def is_open(self):
         return self.zigbee_uart.isOpen()
 
@@ -135,6 +137,15 @@ def stop():
 
 def start():
     global current_mode
+
+    if current_mode == Mode.CHANNEL_MODE:
+        input_queue.put('setchannel ' + format(channel, 'X'))
+        input_queue.put('settxpower ' + format(power, 'X'))
+
+    if current_mode == Mode.POWER_MODE:
+        input_queue.put('setchannel ' + format(channel, 'X'))
+        input_queue.put('settxpower ' + format(power, 'X'))
+
     if current_mode != Mode.START_MODE:
         current_mode = Mode.START_MODE
         if is_tx():
@@ -184,18 +195,24 @@ def io_jobs():
                 pass
             else:
                 output_queue.get()
-                if y == 255 and int(x) >= -60:
-                    lcd.redraw(channel, 'Great', str(y), str(x))
-                    buzzer.buzz(.1, 2000, 3)
-                elif y == 255 and -80 < int(x) < -60:
-                    lcd.redraw(channel, 'Good', str(y), str(x))
-                    buzzer.buzz(.3, 2000, 3)
-                elif int(y) > 240 and int(x) < -80:
-                    lcd.redraw(channel, 'Bad', str(y), str(x))
-                    buzzer.buzz(.5, 2000, 3)
+                if y >= 250:
+                    if int(x) >= -30:
+                        lcd.redraw(channel, 'Excellent', str(y), str(x))
+                        buzzer.buzz(.1, 2000, 1)
+                    elif int(x) >= -67:
+                        lcd.redraw(channel, 'Good', str(y), str(x))
+                        buzzer.buzz(.1, 2500, 1)
+                    else:
+                        lcd.redraw(channel, 'Good', str(y), str(x))
+                        buzzer.buzz(.1, 2700, 1)
                 else:
-                    lcd.redraw(channel, 'Poor', str(y), str(x))
-                    buzzer.buzz(.7, 2000, 3)
+                    if int(x) <= -89:
+                        lcd.redraw(channel, 'Poor', str(y), str(x))
+                        buzzer.buzz(.1, 3000, 3)
+                    else:
+                        lcd.redraw(channel, 'Bad', str(y), str(x))
+                        buzzer.buzz(.1, 3200, 3)
+
         sleep(.1)
 
         if not input_queue.empty():
@@ -213,10 +230,13 @@ def io_jobs():
         if sp.in_Waiting() > 1 and current_mode == Mode.START_MODE:
             data = sp.read()
             if len(data) > 80:
+                print(data)
                 r = (data.split('{')[8][0:3])
                 l = (data.split('{')[7][0:4])
                 try:
                     int(r)
+                    if 4000 != int(data.split('{')[11][2:6]):
+                        continue
                     rssi.append(r)
                     lqi.append(int(l, 16))
                 except ValueError:
