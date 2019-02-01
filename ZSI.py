@@ -201,20 +201,20 @@ def io_jobs():
                 if y >= 250:
                     if int(x) >= -30:
                         lcd.redraw(channel, 'Excellent', str(y), str(x))
-                        buzzer.buzz(.1, 2000, 1)
+                        buzzer.buzz(.1, 2300, 1)
                     elif int(x) >= -67:
                         lcd.redraw(channel, 'Good', str(y), str(x))
                         buzzer.buzz(.1, 2500, 1)
                     else:
                         lcd.redraw(channel, 'Good', str(y), str(x))
-                        buzzer.buzz(.1, 2700, 1)
+                        buzzer.buzz(.1, 2700, 2)
                 else:
                     if int(x) <= -89:
                         lcd.redraw(channel, 'Poor', str(y), str(x))
                         buzzer.buzz(.1, 3000, 3)
                     else:
                         lcd.redraw(channel, 'Bad', str(y), str(x))
-                        buzzer.buzz(.1, 3200, 3)
+                        buzzer.buzz(.1, 3200, 4)
 
         sleep(.1)
 
