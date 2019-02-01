@@ -19,7 +19,7 @@ class Lcd:
         self.display.begin()
         self.signal_state = ''
         # Load an image.
-        image = Image.open('logo.jpg').rotate(0).resize((self.WIDTH, self.HEIGHT))
+        image = Image.open('/home/pi/ZSI/logo.jpg').rotate(0).resize((self.WIDTH, self.HEIGHT))
         self.display.display(image)
         self.draw = self.display.draw()
 
@@ -44,24 +44,35 @@ class Lcd:
         self.display.clear()
         self.draw_rotated_text(self.display.buffer, state, (10, 10), 0, self.font1, fill=(0, 0, 255))
         if state == 'Poor':
-            self.draw.rectangle((8, 40, 50, 50), outline=(0, 0, 255), fill=(0, 0, 255))
+            self.draw.rectangle((8, 40, 50, 60), outline=(0, 0, 255), fill=(0, 0, 255))
         elif state == 'Bad':
-            self.draw.rectangle((8, 40, 50, 50), outline=(0, 0, 255), fill=(0, 0, 255))
-            self.draw.rectangle((50, 40, 70, 50), outline=(0, 110, 255), fill=(0, 110, 255))
+            self.draw.rectangle((8, 40, 50, 60), outline=(0, 0, 255), fill=(0, 0, 255))
+            self.draw.rectangle((50, 40, 70, 60), outline=(0, 110, 255), fill=(0, 110, 255))
         elif state == 'Good':
-            self.draw.rectangle((8, 40, 50, 50), outline=(0, 0, 255), fill=(0, 0, 255))
-            self.draw.rectangle((50, 40, 70, 50), outline=(0, 110, 255), fill=(0, 110, 255))
-            self.draw.rectangle((70, 40, 90, 50), outline=(0, 245, 255), fill=(0, 245, 255))
+            self.draw.rectangle((8, 40, 50, 60), outline=(0, 0, 255), fill=(0, 0, 255))
+            self.draw.rectangle((50, 40, 70, 60), outline=(0, 110, 255), fill=(0, 110, 255))
+            self.draw.rectangle((70, 40, 90, 60), outline=(0, 245, 255), fill=(0, 245, 255))
         else:
-            self.draw.rectangle((8, 40, 50, 50), outline=(0, 0, 255), fill=(0, 0, 255))
-            self.draw.rectangle((50, 40, 70, 50), outline=(0, 110, 255), fill=(0, 110, 255))
-            self.draw.rectangle((70, 40, 90, 50), outline=(0, 245, 255), fill=(0, 245, 255))
-            self.draw.rectangle((90, 40, 118, 50), outline=(0, 255, 0), fill=(0, 255, 0))
+            self.draw.rectangle((8, 40, 50, 60), outline=(0, 0, 255), fill=(0, 0, 255))
+            self.draw.rectangle((50, 40, 70, 60), outline=(0, 110, 255), fill=(0, 110, 255))
+            self.draw.rectangle((70, 40, 90, 60), outline=(0, 245, 255), fill=(0, 245, 255))
+            self.draw.rectangle((90, 40, 118, 60), outline=(0, 255, 0), fill=(0, 255, 0))
         self.signal_state = state
         if not (power is None):
             self.draw_rotated_text(self.display.buffer, 'POWER', (10, 75), 0, self.label_font, fill=(0, 255, 0))
             self.draw_rotated_text(self.display.buffer, str(power), (75, 65), 0, self.font1, fill=(255, 255, 255))
 
+        self.draw_rotated_text(self.display.buffer, 'CHANNEL', (10, 100), 0, self.label_font, fill=(0, 255, 0))
+        self.draw_rotated_text(self.display.buffer, str(channel), (75, 90), 0, self.font1, fill=(255, 255, 255))
+        self.draw_rotated_text(self.display.buffer, 'LQI', (10, 120), 0, self.label_font, fill=(0, 255, 0))
+        self.draw_rotated_text(self.display.buffer, lqi, (10, 130), 0, self.font1, fill=(255, 255, 255))
+        self.draw_rotated_text(self.display.buffer, 'RSSI', (70, 120), 0, self.label_font, fill=(0, 255, 0))
+        self.draw_rotated_text(self.display.buffer, rssi, (70, 130), 0, self.font1, fill=(255, 255, 255))
+        self.display.display()
+
+    def reflash(self, channel, state='No Data', lqi='N/A', rssi='N/A'):
+        self.display.clear()
+        self.draw_rotated_text(self.display.buffer, state, (10, 10), 0, self.font1, fill=(0, 0, 255))
         self.draw_rotated_text(self.display.buffer, 'CHANNEL', (10, 100), 0, self.label_font, fill=(0, 255, 0))
         self.draw_rotated_text(self.display.buffer, str(channel), (75, 90), 0, self.font1, fill=(255, 255, 255))
         self.draw_rotated_text(self.display.buffer, 'LQI', (10, 120), 0, self.label_font, fill=(0, 255, 0))

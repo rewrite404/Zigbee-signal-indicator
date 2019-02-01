@@ -33,7 +33,7 @@ class SerialProcess:
         return
 
     def __init__(self):
-        self.zigbee_uart = serial.Serial(port='/dev/ttyUSB0',
+        self.zigbee_uart = serial.Serial(port='/dev/ttyAMA0',
                                          baudrate=115200,
                                          parity=serial.PARITY_NONE,
                                          stopbits=serial.STOPBITS_ONE,
@@ -154,6 +154,9 @@ def start():
             input_queue.put('rx')
 
     btn_start.when_pressed = stop
+
+    lcd.reflash(channel)
+
     buzzer.set()
 
 
