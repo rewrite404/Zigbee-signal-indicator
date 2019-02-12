@@ -58,9 +58,13 @@ class Lcd:
             self.draw.rectangle((70, 40, 90, 60), outline=(0, 245, 255), fill=(0, 245, 255))
             self.draw.rectangle((90, 40, 118, 60), outline=(0, 255, 0), fill=(0, 255, 0))
         self.signal_state = state
+
         if not (power is None):
             self.draw_rotated_text(self.display.buffer, 'POWER', (10, 75), 0, self.label_font, fill=(0, 255, 0))
-            self.draw_rotated_text(self.display.buffer, str(power), (75, 65), 0, self.font1, fill=(255, 255, 255))
+            if power > 0:
+                self.draw_rotated_text(self.display.buffer, "+" + str(power), (75, 65), 0, self.font1, fill=(255, 255, 255))
+            else:
+                self.draw_rotated_text(self.display.buffer, str(power), (75, 65), 0, self.font1, fill=(255, 255, 255))
 
         self.draw_rotated_text(self.display.buffer, 'CHANNEL', (10, 100), 0, self.label_font, fill=(0, 255, 0))
         self.draw_rotated_text(self.display.buffer, str(channel), (75, 90), 0, self.font1, fill=(255, 255, 255))

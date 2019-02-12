@@ -47,6 +47,10 @@ class SerialProcess:
             if is_tx():
                 input_queue.put('setTxPowMode 1 0')
                 input_queue.put('settxpower ' + format(power, 'X'))
+                input_queue.put("setTxLength 6")
+                input_queue.put("setTxPayload 0 0x1b 0x61 0x98 0x00")
+            else:
+                input_queue.put("showPayload 1")
 
         input_queue.put('e')
 
@@ -170,9 +174,9 @@ def io_jobs():
 
         if current_mode == Mode.STOP_MODE:
             if is_tx():
-                lcd.redraw(channel, 'STOPED', 'N/A', 'N/A', power)
+                lcd.redraw(channel, 'STOP', 'N/A', 'N/A', power)
             else:
-                lcd.redraw(channel, 'STOPED', 'N/A', 'N/A')
+                lcd.redraw(channel, 'STOP', 'N/A', 'N/A')
         elif current_mode == Mode.POWER_MODE:
             if is_tx():
                 lcd.redraw(channel, 'POWER', 'N/A', 'N/A', power)
@@ -232,8 +236,9 @@ def io_jobs():
 
         if sp.in_Waiting() > 1 and current_mode == Mode.START_MODE:
             data = sp.read()
-            if len(data) > 80:
-                print(data)
+            print(data)
+
+            if "0x1B 0x61" in data and len(data.split('{')) > 11:
                 r = (data.split('{')[8][0:3])
                 l = (data.split('{')[7][0:4])
                 try:
@@ -266,7 +271,7 @@ if __name__ == '__main__':
 
     time()
     jmp = Button(21)
-    btn_power = Button(19, hold_time=2)
+    btn_power = Button(26, hold_time=2)
     btn_channel = Button(13, hold_time=2)
     btn_start = Button(6)
 
