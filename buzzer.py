@@ -8,10 +8,10 @@ class Buzzer:
     PWM_LED_PIN = 12
 
     Short_Duration = .05
-    Long_Duration = .1
-    Low_Pitch = 2500
-    mid_Pitch = 2750
-    High_Pitch = 2900
+    Long_Duration = .2
+    Low_Pitch = 2200
+    mid_Pitch = 2500
+    High_Pitch = 2800
 
     def __init__(self):
         self.pi = pigpio.pi()
@@ -30,8 +30,8 @@ class Buzzer:
 
     def start(self):
         self.buzz(self.Short_Duration, self.Low_Pitch)
-        self.buzz(self.Long_Duration * 2, self.mid_Pitch)
-        self.buzz(self.Long_Duration * 2, self.High_Pitch)
+        self.buzz(self.Short_Duration * 2, self.mid_Pitch)
+        self.buzz(self.Long_Duration, self.High_Pitch)
 
     def error(self):
         self.buzz(self.Short_Duration, self.High_Pitch, 3)

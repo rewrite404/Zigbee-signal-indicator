@@ -61,6 +61,7 @@ class SerialProcess:
         self.zigbee_uart.close()
 
     def write(self, data):
+        print("> " + data)
         data += '\r\n'
         self.zigbee_uart.write(data.encode())
 
@@ -81,6 +82,7 @@ def set_power():
     input_queue.put('settxpower ' + format(power, 'X'))
     current_mode = Mode.HOLD_MODE
     buzzer.prog()
+    lcd.setflash()
 
 
 def power_mode():
@@ -101,6 +103,7 @@ def power_mode():
         power = -8
 
     buzzer.set()
+    lcd.setflash()
 
 
 def set_channels():
@@ -111,6 +114,7 @@ def set_channels():
     input_queue.put('setchannel ' + format(channel, 'X'))
     current_mode = Mode.HOLD_MODE
     buzzer.prog()
+    lcd.setflash()
 
 
 def channels():
@@ -128,6 +132,7 @@ def channels():
         channel = 11
 
     buzzer.set()
+    lcd.setflash()
 
 
 def stop():
@@ -137,6 +142,7 @@ def stop():
         input_queue.put('e')
     btn_start.when_pressed = start
     buzzer.set()
+    lcd.setflash()
 
 
 def start():
@@ -144,11 +150,13 @@ def start():
 
     if current_mode == Mode.CHANNEL_MODE:
         input_queue.put('setchannel ' + format(channel, 'X'))
-        input_queue.put('settxpower ' + format(power, 'X'))
+        if is_tx():
+            input_queue.put('settxpower ' + format(power, 'X'))
 
     if current_mode == Mode.POWER_MODE:
         input_queue.put('setchannel ' + format(channel, 'X'))
-        input_queue.put('settxpower ' + format(power, 'X'))
+        if is_tx():
+            input_queue.put('settxpower ' + format(power, 'X'))
 
     if current_mode != Mode.START_MODE:
         current_mode = Mode.START_MODE
@@ -158,10 +166,8 @@ def start():
             input_queue.put('rx')
 
     btn_start.when_pressed = stop
-
-    lcd.reflash(channel)
-
     buzzer.set()
+    lcd.setflash()
 
 
 def io_jobs():
@@ -230,13 +236,18 @@ def io_jobs():
                 sp.flush_Output()
                 output_queue.queue.clear()
                 input_queue.queue.clear()
+            elif data == 'rx':
+                sp.flush_Input()
+                sp.flush_Output()
+                output_queue.queue.clear()
+                input_queue.queue.clear()
+                # lcd.reflash(channel)
 
             sp.write(data)
-            print(data)
+            lcd.setflash()
 
         if sp.in_Waiting() > 1 and current_mode == Mode.START_MODE:
             data = sp.read()
-            print(data)
 
             if "0x1B 0x61" in data and len(data.split('{')) > 11:
                 r = (data.split('{')[8][0:3])
@@ -259,7 +270,7 @@ def io_jobs():
                         lqi[:] = []
                         output_queue.put(data)
                         print('RSSI:{}, LQI: {}'.format(repr(x), repr(y)))
-
+                        lcd.setflash()
                     except statistics.StatisticsError:
                         continue
 
@@ -307,6 +318,7 @@ if __name__ == '__main__':
             btn_power.when_released = power_mode
             btn_power.when_held = set_power
             current_mode = Mode.IDLE_MODE
+            lcd.setflash()
             pause()
         except Exception:
             sp.close()
