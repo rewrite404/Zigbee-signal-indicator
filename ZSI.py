@@ -203,10 +203,10 @@ def io_jobs():
             else:
                 output_queue.get()
                 if y >= 250:
-                    if int(x) >= -30:
+                    if int(x) >= -50:
                         lcd.redraw(channel, 'Excellent', str(y), str(x))
                         buzzer.buzz(.1, 2300, 1)
-                    elif int(x) >= -67:
+                    elif int(x) >= -70:
                         lcd.redraw(channel, 'Good', str(y), str(x))
                         buzzer.buzz(.1, 2500, 1)
                     else:
