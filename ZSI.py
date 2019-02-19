@@ -136,16 +136,19 @@ def channels():
 
 
 def stop():
+    btn_start.when_released = None
     global current_mode
     if current_mode == Mode.START_MODE:
         current_mode = Mode.STOP_MODE
         input_queue.put('e')
-    btn_start.when_pressed = start
+
     buzzer.set()
     lcd.setflash()
+    btn_start.when_released = start
 
 
 def start():
+    btn_start.when_released = None
     global current_mode
 
     if current_mode == Mode.CHANNEL_MODE:
@@ -165,9 +168,9 @@ def start():
         else:
             input_queue.put('rx')
 
-    btn_start.when_pressed = stop
     buzzer.set()
     lcd.setflash()
+    btn_start.when_released = stop
 
 
 def io_jobs():
@@ -312,7 +315,7 @@ if __name__ == '__main__':
         try:
             t = threading.Thread(target=io_jobs)
             t.start()
-            btn_start.when_pressed = start
+            btn_start.when_released = start
             btn_channel.when_released = channels
             btn_channel.when_held = set_channels
             btn_power.when_released = power_mode
